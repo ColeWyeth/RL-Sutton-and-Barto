@@ -129,7 +129,7 @@ def main():
     print("Optimal policy:")
     for i in range(21):
         for j in range(21):
-            print("%3.f " % pi[(i,j)], endline="")
+            print("%3.f " % pi[(i,j)], end="")
         print()
 
                     
