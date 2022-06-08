@@ -1,6 +1,10 @@
 import random
 import math
 import itertools
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import sys
 
 def poisson(n, lam):
     return (lam**n)/(math.factorial(n))*math.exp(-lam)
@@ -9,6 +13,10 @@ def get_S():
     return itertools.product(range(21), range(21))
 
 def main():
+
+    if len(sys.argv) > 1:
+        print("Adding modifications for problem 4.7")
+
     # 1: Initialization
 
     discount = 0.9
@@ -29,7 +37,13 @@ def main():
 
     def bootstrapEstimate(s, a, Vals):
         i, j = s
+
         cost = -2*abs(a)
+
+        # For exercise 4.7, an employee can take one car from location 1
+        # to location 2 for free.
+        if len(sys.argv) > 1 and a > 0:
+            cost += 2
 
         # this does not depend on requests/returns
         val_sum = cost
@@ -37,8 +51,14 @@ def main():
         # cars at each location in the morning
         cars_1, cars_2 = i-a, j+a
 
+        if len(sys.argv) > 1:
+            if cars_1 > 10:
+                cost -= 4
+            if cars_2 > 10:
+                cost -= 4
+
         # probabilities drop to about 1% outside of this range
-        n_vals = [i for i in range(10)]
+        n_vals = [i for i in range(12)]
 
         # it would be much easier/faster to sample the four poisson 
         # distributions for requests/returns at each location, but that
@@ -79,6 +99,7 @@ def main():
         print("V(20,20): %f:" % V[(20,20)])
     
         # Policy Improvement
+        print("Improving policy")
         policyStable = True
         for s in get_S():
             oldAction = pi[s]
@@ -93,10 +114,23 @@ def main():
             if not bestA == oldAction:
                 policyStable = False
         
+    x = [i for i in range(21)]
+    y = [i for i in range(21)]
+    X, Y = np.meshgrid(x, y)
+    f = np.vectorize(lambda x, y: V[(x,y)])
+    Z = f(X, Y)
 
-    print(V)
-    print(pi)
-    print(pi[(18,3)])
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+    ax.set_title("V(s)")
+    plt.show()
+    
+    print("Optimal policy:")
+    for i in range(21):
+        for j in range(21):
+            print("%3.f " % pi[(i,j)], endline="")
+        print()
 
                     
 if __name__ == "__main__":
