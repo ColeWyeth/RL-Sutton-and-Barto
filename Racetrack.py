@@ -12,8 +12,8 @@ import time
 
 
 def main():
-    episodes = 500000
-    eps = 1.0
+    episodes = 50000
+    eps = 0.2
     payoffs = []
 
     sidelength = 20
@@ -45,7 +45,7 @@ def main():
         for acc_x, acc_y in product((-1,0,1),(-1,0,1)):
             x, y, vel_x, vel_y = s
             # check if the resulting velocity is valid for this position
-            if (x, y, vel_x+acc_x, vel_y+acc_y) in S:
+            if (vel_x + acc_x > 0 or vel_y + acc_y > 0) and (x,y,vel_x+acc_x,vel_y+acc_y) in S:
                 actions.append((acc_x, acc_y))
         A[s] = actions
 
@@ -53,7 +53,7 @@ def main():
     Q = dict()
     for s in S:
         for a in A[s]:
-            Q[(s,a)] = 0
+            Q[(s,a)] = -10
 
     print("Initializing weight normalization")
     C = dict()
@@ -78,13 +78,19 @@ def main():
            R is always -1 but is included to match pseudocode
         """
         history = []
-        
+
+        s = getRandomStart()
+
         if visualize:
+            turtle.pendown()
             turtle.tracer(1, 8)
             turtle.showturtle()
             turtle.color(random.choice(['red', 'blue', 'green']) )
+            x,y,_,_ = s
+            turtle.penup()
+            turtle.goto(10*x, 10*y)
+            turtle.pendown()
 
-        s = getRandomStart()
         while True:
             x, y, vel_x, vel_y = s
 
@@ -111,6 +117,9 @@ def main():
                 vel_x, vel_y = vel_x + a[0], vel_y + a[1]
             x, y = x + vel_x, y + vel_y 
             if crossedFinishLine(x,y):
+                if visualize:
+                    turtle.speed(int((vel_x**2 + vel_y**2)**0.5))
+                    turtle.goto(scale*x,scale*y)
                 break
             elif not inTrackBounds(x,y):
                 s = getRandomStart()
@@ -139,8 +148,7 @@ def main():
                 break
             W /= bAS 
         payoffs.append(-len(history))
-        if i%10000 == 0:
-            eps = 0.995*eps
+        if i%1000 == 0:
             print("episode " + str(i) + ", " + "average payoff: " + str(sum(payoffs)/len(payoffs)))
 
     # Draw racetrack
@@ -157,7 +165,7 @@ def main():
                 t.forward(scale)
                 t.left(90)
     turtle.update()
-    
+
     screen = turtle.getscreen()
     screen.onscreenclick(lambda x,y: generateEpisode(Q,0,False,visualize=True))
     screen.mainloop()    
